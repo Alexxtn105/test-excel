@@ -20,6 +20,8 @@ func main() {
 	http.HandleFunc("GET /report", controllers.ReportHandler)
 	http.HandleFunc("GET /report/csv", controllers.ReportCSVHandler)
 	http.HandleFunc("GET /upload/csv", controllers.ReportCSVDownloadHandler)
+	http.HandleFunc("GET /report/excel", controllers.ReportExcelHandler)
+	http.HandleFunc("GET /upload/excel", controllers.ReportExcelDownloadHandler)
 
 	log.Printf("Starting server on %s\n", addr)
 

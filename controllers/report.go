@@ -3,6 +3,7 @@ package controllers
 import (
 	"bytes"
 	"encoding/csv"
+	"github.com/xuri/excelize/v2"
 	"html/template"
 	"log"
 	"net/http"
@@ -11,13 +12,13 @@ import (
 	"time"
 )
 
-// Define the data structure to pass to the template
+// PageData Define the data structure to pass to the template
 type PageData struct {
 	Title     string
 	UserStats *[]models.UserStats
 }
 
-// handler function to respond to GET requests
+// ReportHandler handler function to respond to GET requests
 func ReportHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		// Define the data to pass to the template
@@ -102,4 +103,49 @@ func ReportCSVDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/report", http.StatusSeeOther)
+}
+
+func ReportExcelHandler(w http.ResponseWriter, r *http.Request) {
+
+	f := excelize.NewFile()
+
+	// создаем новый лист, сохраняем индекс в переменной index
+	index, _ := f.NewSheet("Sheet1")
+
+	// пишем заголовки столбцов
+	headers := []string{"User_ID", "User_Name", "LoginCount", "LastLogin", "Active"}
+	for i, header := range headers {
+		col := string(rune('A' + i)) // ASCII символа A == 65. Для i=0 col=A, i=1 col=B
+		f.SetCellValue("Sheet1", col+"1", header)
+	}
+
+	// берем данные из БД
+	userStats := models.GetUserStats()
+
+	// пишем данные
+	for i, user := range *userStats {
+		row := strconv.Itoa(i + 2) // делаем +2 потосу что счет идет с 1 и первый столбец это заголовок
+		f.SetCellInt("Sheet1", "A"+row, user.UserID)
+		f.SetCellValue("Sheet1", "B"+row, user.UserName)
+		f.SetCellInt("Sheet1", "C"+row, user.LoginCount)
+		f.SetCellValue("Sheet1", "D"+row, user.LastLogin.Format("2006-01-02 15:04:05"))
+		f.SetCellBool("Sheet1", "E"+row, user.Active)
+	}
+
+	// устанавливаем активный лист
+	f.SetActiveSheet(index)
+
+	// пишем файл в ответ
+	// пишем заголовки
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set("Content-Disposition", "attachment;filename=user_stats.xlsx")
+	//пишем данные
+	if err := f.Write(w); err != nil {
+		http.Error(w, "Unable to write file", http.StatusInternalServerError)
+		log.Printf("Error Writing file: %v", err)
+	}
+}
+
+func ReportExcelDownloadHandler(w http.ResponseWriter, r *http.Request) {
+
 }
