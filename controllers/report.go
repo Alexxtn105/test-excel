@@ -46,7 +46,7 @@ func ReportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ReportCSVHandler(w http.ResponseWriter, r *http.Request) {
+func ReportCSVDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
 
@@ -73,7 +73,7 @@ func ReportCSVHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(buf.Bytes())
 }
 
-func ReportCSVDownloadHandler(w http.ResponseWriter, r *http.Request) {
+func ReportCSVUploadHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -105,7 +105,7 @@ func ReportCSVDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/report", http.StatusSeeOther)
 }
 
-func ReportExcelHandler(w http.ResponseWriter, r *http.Request) {
+func ReportExcelDownloadHandler(w http.ResponseWriter, r *http.Request) {
 
 	f := excelize.NewFile()
 
@@ -146,6 +146,40 @@ func ReportExcelHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ReportExcelDownloadHandler(w http.ResponseWriter, r *http.Request) {
+func ReportExcelUploadHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "Unable to read file", http.StatusBadRequest)
+		log.Printf("Error reading file: %v", err)
+		return
+	}
+	defer file.Close()
+
+	f, err := excelize.OpenReader(file)
+	if err != nil {
+		http.Error(w, "Unable to parse Excel file", http.StatusBadRequest)
+		log.Printf("Error parsing Excel file: %v", err)
+	}
+
+	// получаем данные листа Excel - это слайс слайсов
+	rows, err := f.GetRows("Sheet1")
+	if err != nil {
+		http.Error(w, "Unable to read sheet", http.StatusBadRequest)
+		log.Printf("Error reading sheet: %v", err)
+	}
+
+	// заливаем данные двумерного слайса в базу данных (построчно)
+	err = models.AddRows(&rows)
+	if err != nil {
+		http.Error(w, "Failed to add rows", http.StatusInternalServerError)
+		log.Printf("Failed to add rows: %v", err)
+	}
+
+	// в случае успеха редирект на страницу отчетов
+	http.Redirect(w, r, "/report", http.StatusSeeOther)
 }

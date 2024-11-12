@@ -18,10 +18,10 @@ func main() {
 
 	// Register the handler function for the "/hello" endpoint
 	http.HandleFunc("GET /report", controllers.ReportHandler)
-	http.HandleFunc("GET /report/csv", controllers.ReportCSVHandler)
-	http.HandleFunc("GET /upload/csv", controllers.ReportCSVDownloadHandler)
-	http.HandleFunc("GET /report/excel", controllers.ReportExcelHandler)
-	http.HandleFunc("GET /upload/excel", controllers.ReportExcelDownloadHandler)
+	http.HandleFunc("GET /report/csv", controllers.ReportCSVDownloadHandler)
+	http.HandleFunc("POST /upload/csv", controllers.ReportCSVUploadHandler)
+	http.HandleFunc("GET /report/excel", controllers.ReportExcelDownloadHandler)
+	http.HandleFunc("POST /upload/excel", controllers.ReportExcelUploadHandler)
 
 	log.Printf("Starting server on %s\n", addr)
 

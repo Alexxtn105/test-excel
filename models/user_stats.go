@@ -53,6 +53,7 @@ func GetUserStats() *[]UserStats {
 	return &users
 }
 
+// AddRows Построчное добавление данных в БД
 func AddRows(rows *[][]string) error {
 	tx, err := DB.Begin()
 	if err != nil {
