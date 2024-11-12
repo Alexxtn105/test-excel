@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"test-excel/controllers"
@@ -11,7 +10,11 @@ import (
 var addr = ":8088"
 
 func main() {
-	fmt.Println("hello")
+	//fmt.Println("hello")
+
+	// Создаем пустую БД
+	//models.ConnectDatabase()
+	//models.DBMigrate()
 
 	// Register the handler function for the "/hello" endpoint
 	http.HandleFunc("GET /report", controllers.ReportHandler)
